@@ -9,21 +9,13 @@ fn main() {
         .chunks(3)
         .for_each(|sacks| {
 
-            println!("{:?}", sacks);
-
-            let first = sacks.into_iter().nth(0).unwrap().chars().map(|x| x.clone()).collect::<HashSet<_>>();
-            let second = sacks.into_iter().nth(0).unwrap().chars().map(|x| x.clone()).collect::<HashSet<_>>();
-            let third = sacks.into_iter().nth(0).unwrap().chars().map(|x| x.clone()).collect::<HashSet<_>>();
-
-            println!("{:?}", first);
-            println!("{:?}", second);
-
+            let mut sacks_iter = sacks.into_iter();
+            let first: HashSet<_> = sacks_iter.nth(0).unwrap().chars().map(|x| x.clone()).collect();
+            let second: HashSet<_> = sacks_iter.nth(0).unwrap().chars().map(|x| x.clone()).collect();
+            let third: HashSet<_> = sacks_iter.nth(0).unwrap().chars().map(|x| x.clone()).collect();
 
             let first_two: HashSet<char> = first.intersection(&second).map(|x| x.clone()).collect();
             let all_three: HashSet<_> = first_two.intersection(&third).collect();
-
-            println!("first two {:?}", first_two);
-            println!("all_three {:?}", all_three);
 
             all_three.iter().for_each(|item| result += priority(**item));
         });
