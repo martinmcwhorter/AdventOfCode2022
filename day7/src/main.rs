@@ -32,18 +32,15 @@ impl Directory {
 #[derive(Debug)]
 struct MasterMap {
     map: HashMap<usize, Directory>,
-    reverse_map: HashMap<String, usize>,
     index: usize,
     current_directory_id: usize
 }
 
 impl MasterMap {
     fn add_directory(&mut self, mut directory: Directory) -> usize {
-        let directory_name = directory.name.clone();
         self.index += 1;
         directory.id = self.index; 
-        self.map.insert(directory.id, directory);
-        self.reverse_map.insert(directory_name, self.index);
+        self.map.insert(directory.id, directory.clone());
         return self.index;
     }
     
@@ -65,9 +62,16 @@ impl MasterMap {
         self.map.insert(self.current_directory_id, current_directory);
     }
 
-    fn change_directory(&mut self, name: &str) -> &Directory {
-        self.current_directory_id = self.reverse_map.get(name).unwrap().clone();
-        return self.map.get(&self.index).unwrap();
+    fn change_directory(&mut self, name: &str) {
+
+        self.current_directory().directory_ids.clone().into_iter().for_each(|d| {
+            let candidate = self.map.get(&d).unwrap();
+            if candidate.name == name.to_string() {
+                self.current_directory_id = candidate.id;
+                return;
+            }
+        });
+
     }
 
     fn current_directory(&mut self) -> &Directory {
@@ -78,7 +82,7 @@ impl MasterMap {
         self.current_directory_id = self.current_directory().parent_id;        
     }
 
-    fn new() -> Self { Self { map: HashMap::new(), reverse_map: HashMap::new(), index: 0, current_directory_id: 0 } }
+    fn new() -> Self { Self { map: HashMap::new(), index: 0, current_directory_id: 0 } }
 }
 
 fn main() {
@@ -109,9 +113,26 @@ fn main() {
         }
     });
 
-    println!("{}", sum_at_most_100k);
+    println!("part 1 {}", sum_at_most_100k);
+    
+    let space_used = get_size_of_dir(&master, master.map.get(&(1 as usize)).unwrap());
+    let space_available = 70000000 - space_used;
+    let space_needed = 30000000 - space_available;
 
-    println!("size of root{}", get_size_of_dir(&master, master.map.get(&(1 as usize)).unwrap()));
+    println!("space used {}", space_used);
+    println!("space avalabile {}", space_available);
+    println!("space needed {}", space_needed);
+
+    let mut deletion_candidates = vec![];
+    master.map.clone().into_iter().for_each(|d| {
+        let sum = get_size_of_dir(&master, &d.1);
+        if sum >= space_needed {
+            deletion_candidates.push(sum)
+        }
+    });
+
+    deletion_candidates.sort();
+    println!("part 2 {}", deletion_candidates.first().unwrap());
 
 }
 
@@ -124,7 +145,9 @@ fn parse_change_directory(master: &mut MasterMap, lines: &mut Vec<&str>) -> bool
     let split: Vec<&str> = line.split_whitespace().collect();
     let directory_name = split.get(2).unwrap();
 
-    if directory_name.to_string() == ".." {
+    if directory_name.to_string() == "/" {
+        master.current_directory_id = 1;
+    } else if directory_name.to_string() == ".." {
         master.change_to_parent();
     } else {
         master.change_directory(directory_name);
