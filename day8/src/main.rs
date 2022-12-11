@@ -27,15 +27,17 @@ impl Forrest {
         return self.trees[p.y][p.x];
     }
 
-    fn can_tree_be_seen(&self, p: &Position) -> bool {   
+    fn can_tree_be_seen(&self, p: &Position) -> (bool, u32) {   
         if p.x == 0 || p.x == self.max_x - 1 || p.y == 0 || p.y == self.max_y - 1 {
-            return true;
+            return (true, 0);
         }
 
         let mut result = false;
         let tree_height = self.tree_height(p);
-    
+        
         const DISTANCE_MULTIPLIER: [(isize, isize); 4] = [(0, 1), (0, -1), (1, 0), (-1, 0)];
+
+        let mut scenic_scores : Vec<u32> = vec![];
 
         DISTANCE_MULTIPLIER.into_iter().for_each(|m| {
             let mut distance = 1;
@@ -55,28 +57,36 @@ impl Forrest {
 
                 distance += 1;
             }
+            
+            scenic_scores.push(distance as u32);
         });
     
-        return result;
+        return (result, scenic_scores.into_iter().fold(1, |acc, s| acc * s));
     }
     
-    fn visible_count(&self) -> u32 {
+    fn visible_count(&self) -> (u32, u32) {
         let mut visible = 0;
+        let mut scenic_scores: Vec<u32> = vec![];
         for y in 0..self.max_y {
             for x in 0..self.max_x {
-                if self.can_tree_be_seen(&Position::new(x, y)) {
+                let (can_be_seen, scenic_score) = self.can_tree_be_seen(&Position::new(x, y));
+                scenic_scores.push(scenic_score);
+                if can_be_seen {
                     visible += 1;
                 }
             }
         }
 
-        return visible;
+        scenic_scores.sort();
+        return (visible, *scenic_scores.last().unwrap());
     }
 }
 
 fn main() {
     let forrest = Forrest::from_str(include_str!("../input.txt"));
-    println!("{}", forrest.visible_count());
+    let (visible, scenic_score) = forrest.visible_count();
+    println!("Visible Trees: {}", visible);
+    println!("Scenic Score: {}", scenic_score);
 }
 
 #[cfg(test)]
@@ -98,7 +108,8 @@ mod tests {
 
         let result = forrest.visible_count();
 
-        assert_eq!(21, result);
+        assert_eq!(21, result.0);
+        assert_eq!(8, result.1);
     }
 
     #[test]
@@ -117,12 +128,20 @@ mod tests {
     fn can_tree_be_seen() {
         let forrest = Forrest::from_str(fixture());
 
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(1, 1)), true);
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 1)), true);
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(3, 1)), false);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(1, 1)).0, true);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 1)).0, true);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(3, 1)).0, false);
 
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(1, 2)), true);
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 2)), false);
-        assert_eq!(forrest.can_tree_be_seen(&Position::new(3, 2)), true);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(1, 2)).0, true);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 2)).0, false);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(3, 2)).0, true);
+    }
+
+    #[test]
+    fn can_tree_be_seen_scenic_score() {
+        let forrest = Forrest::from_str(fixture());
+
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 1)).1, 4);
+        assert_eq!(forrest.can_tree_be_seen(&Position::new(2, 3)).1, 8);
     }
 }
