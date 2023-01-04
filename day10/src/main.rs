@@ -10,7 +10,7 @@ struct Machine {
     cycles: usize,
     xreg: isize,
     signal_strenths: Vec<usize>,
-    crt: [[char; 40]; 6]
+    crt: [[char; 40]; 6],
 }
 
 fn modulo(a: usize, b: usize) -> usize {
@@ -18,17 +18,26 @@ fn modulo(a: usize, b: usize) -> usize {
 }
 
 impl Machine {
-    fn new() -> Self { Self { cycles: 0, xreg: 1, signal_strenths: vec![], crt: [['.'; 40]; 6] } }
+    fn new() -> Self {
+        Self {
+            cycles: 0,
+            xreg: 1,
+            signal_strenths: vec![],
+            crt: [['.'; 40]; 6],
+        }
+    }
 
     fn tick(&mut self) {
         self.cycles += 1;
 
         if self.cycles == 20 {
-            self.signal_strenths.push((self.xreg * (self.cycles as isize)).try_into().unwrap());
+            self.signal_strenths
+                .push((self.xreg * (self.cycles as isize)).try_into().unwrap());
         }
 
-        if self.cycles > 40 && (self.cycles - 20) % 40 == 0{
-            self.signal_strenths.push((self.xreg * (self.cycles as isize)).try_into().unwrap());
+        if self.cycles > 40 && (self.cycles - 20) % 40 == 0 {
+            self.signal_strenths
+                .push((self.xreg * (self.cycles as isize)).try_into().unwrap());
         }
 
         self.draw_crt();
@@ -36,15 +45,14 @@ impl Machine {
 
     fn draw_crt(&mut self) {
         let current_line = self.cycles / 40;
-        if current_line > 5 { return}
+        if current_line > 5 {
+            return;
+        }
         let current_col = modulo(self.cycles - 1, 40);
 
-        println!("cycle {} x {} col {} line {}", self.cycles, self.xreg, current_col, current_line);
-        
         if (self.xreg - 1..self.xreg + 2).contains(&(current_col as isize)) {
-            println!("#");
             self.crt[current_line][current_col] = '#';
-        } 
+        }
     }
 
     fn format_crt(&self) -> String {
@@ -52,7 +60,7 @@ impl Machine {
         return result;
     }
 
-    fn sum_signal_strenth(self) -> usize{
+    fn sum_signal_strenth(self) -> usize {
         return self.signal_strenths.into_iter().sum();
     }
 
@@ -75,7 +83,7 @@ impl Machine {
 
             let value: isize = line.split_once(" ").unwrap().1.parse().unwrap();
 
-            self.tick(); 
+            self.tick();
 
             self.xreg += value;
         }
@@ -107,19 +115,24 @@ mod test {
 
         println!("");
 
-        println!("##..##..##..##..##..##..##..##..##..##..
+        println!(
+            "##..##..##..##..##..##..##..##..##..##..
 ###...###...###...###...###...###...###.
 ####....####....####....####....####....
 #####.....#####.....#####.....#####.....
 ######......######......######......####
-#######.......#######.......#######.....");
+#######.......#######.......#######....."
+        );
 
-        assert_eq!(result, "##..##..##..##..##..##..##..##..##..##..
+        assert_eq!(
+            result,
+            "##..##..##..##..##..##..##..##..##..##..
 ###...###...###...###...###...###...###.
 ####....####....####....####....####....
 #####.....#####.....#####.....#####.....
 ######......######......######......####
-#######.......#######.......#######.....")
+#######.......#######.......#######....."
+        )
     }
 
     fn fixture() -> &'static str {
